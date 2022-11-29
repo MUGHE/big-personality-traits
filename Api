@@ -1,1 +1,96 @@
+from flask import Flask, jsonify, request 
+from sklearn.exceptions import NotFittedError
+import pandas as pd
+import docx
+import io
+import json
+import joblib
+import pickle
+from flask_cors import CORS
 
+app = Flask(__name__)
+CORS(app)
+# bcrypt=Bcrypt(app)
+
+def cOPN_thread():
+    svm1 =joblib.load("model_cOPN.pkl"  ) # Load "model.pkl"
+    tfidf = joblib.load("tfidf_cOPN.pki")
+    send =tfidf.transform([str])
+    temp = svm1.predict(send)
+    temp = temp.tolist()
+    output.append(temp)
+
+@app.route('/predict',methods=['GET','POST'])
+def predict():
+    str=''
+    data=''
+    if(request.method == 'GET'):
+        f = request.files['file']
+        print(f)
+        content = '\n'.join(p.text for p in docx.Document(f).paragraphs)
+        print(type(content))
+        df = pd.read_csv(io.StringIO(content))
+        print(df)
+        
+        str=content
+        # return 'file uploaded successfully'      
+    if(request.method == 'post'):
+        data=request.get_json()
+        str=data['statment']
+    print(str)
+      
+    output = []
+    print(type(str))
+    i=0
+    for i in range(5):
+        if(i == 0):
+            svm1 =joblib.load("model_cOPN.pkl"  ) # Load "model.pkl"
+            tfidf = joblib.load("tfidf_cOPN.pki")
+            send =tfidf.transform([str])
+            temp = svm1.predict(send)
+            temp = temp.tolist()
+            output.append(temp)
+        elif(i==1):
+            svm1 =joblib.load("model_cEXT.pkl"  ) # Load "model.pkl"
+            tfidf = joblib.load("tfidf_cEXT.pki")
+            send =tfidf.transform([str])
+            temp = svm1.predict(send)
+            temp = temp.tolist()
+            output.append(temp)
+        elif(i==2):
+            svm1 =joblib.load("model_cNEU.pkl"  ) # Load "model.pkl"
+            tfidf = joblib.load("tfidf_cNEU.pki")
+            send =tfidf.transform([str])
+            temp = svm1.predict(send)
+            temp = temp.tolist()
+            output.append(temp)
+        elif(i==3):
+            svm1 =joblib.load("model_cCON.pkl"  ) # Load "model.pkl"
+            tfidf = joblib.load("tfidf_cCON.pki")
+            send =tfidf.transform([str])
+            temp = svm1.predict(send)
+            temp = temp.tolist()
+            output.append(temp)
+        else:
+            svm1 =joblib.load("model_cAGR.pkl"  ) # Load "model.pkl"
+            tfidf = joblib.load("tfidf_cAGR.pki")
+            send =tfidf.transform([str])
+            temp = svm1.predict(send)
+            temp = temp.tolist()
+            output.append(temp)
+    # try:
+    #     send =tfidf.transform([str])
+    # except NotFittedError as e:
+    #     print(repr(e))
+    # wc = tfidf.fit_transform(x.apply(lambda x: np.str_(x))) # Fit the model
+    # send =tfidf.transform([str])
+    # output.push(svm1.predict(send))
+    print(output)
+    # return jsonify({'prediction': output})
+    return json.dumps({"OUTPUT":output} )
+
+if __name__=='__main__':
+    
+    app.debug=True
+    app.run(host="localhost",port=5000 )
+ 
