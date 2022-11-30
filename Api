@@ -5,20 +5,56 @@ import docx
 import io
 import json
 import joblib
-import pickle
+from threading import Thread
 from flask_cors import CORS
+import concurrent.futures
 
+
+    
 app = Flask(__name__)
 CORS(app)
 # bcrypt=Bcrypt(app)
 
-def cOPN_thread():
+def cOPN_thread(str):
     svm1 =joblib.load("model_cOPN.pkl"  ) # Load "model.pkl"
     tfidf = joblib.load("tfidf_cOPN.pki")
     send =tfidf.transform([str])
     temp = svm1.predict(send)
     temp = temp.tolist()
-    output.append(temp)
+    return temp
+
+    
+def cEXT_thread(str):
+    svm1 =joblib.load("model_cEXT.pkl"  ) # Load "model.pkl"
+    tfidf = joblib.load("tfidf_cEXT.pki")
+    send =tfidf.transform([str])
+    temp = svm1.predict(send)
+    temp = temp.tolist()
+    return temp
+
+def cNEU_thread(str):
+    svm1 =joblib.load("model_cNEU.pkl"  ) # Load "model.pkl"
+    tfidf = joblib.load("tfidf_cNEU.pki")
+    send =tfidf.transform([str])
+    temp = svm1.predict(send)
+    temp = temp.tolist()
+    return temp
+
+def cCON_thread(str):
+    svm1 =joblib.load("model_cCON.pkl"  ) # Load "model.pkl"
+    tfidf = joblib.load("tfidf_cCON.pki")
+    send =tfidf.transform([str])
+    temp = svm1.predict(send)
+    temp = temp.tolist()
+    return temp
+
+def cAGR_thread(str):
+    svm1 =joblib.load("model_cAGR.pkl"  ) # Load "model.pkl"
+    tfidf = joblib.load("tfidf_cAGR.pki")
+    send =tfidf.transform([str])
+    temp = svm1.predict(send)
+    temp = temp.tolist()
+    return temp
 
 @app.route('/predict',methods=['GET','POST'])
 def predict():
@@ -41,43 +77,28 @@ def predict():
       
     output = []
     print(type(str))
-    i=0
-    for i in range(5):
-        if(i == 0):
-            svm1 =joblib.load("model_cOPN.pkl"  ) # Load "model.pkl"
-            tfidf = joblib.load("tfidf_cOPN.pki")
-            send =tfidf.transform([str])
-            temp = svm1.predict(send)
-            temp = temp.tolist()
-            output.append(temp)
-        elif(i==1):
-            svm1 =joblib.load("model_cEXT.pkl"  ) # Load "model.pkl"
-            tfidf = joblib.load("tfidf_cEXT.pki")
-            send =tfidf.transform([str])
-            temp = svm1.predict(send)
-            temp = temp.tolist()
-            output.append(temp)
-        elif(i==2):
-            svm1 =joblib.load("model_cNEU.pkl"  ) # Load "model.pkl"
-            tfidf = joblib.load("tfidf_cNEU.pki")
-            send =tfidf.transform([str])
-            temp = svm1.predict(send)
-            temp = temp.tolist()
-            output.append(temp)
-        elif(i==3):
-            svm1 =joblib.load("model_cCON.pkl"  ) # Load "model.pkl"
-            tfidf = joblib.load("tfidf_cCON.pki")
-            send =tfidf.transform([str])
-            temp = svm1.predict(send)
-            temp = temp.tolist()
-            output.append(temp)
-        else:
-            svm1 =joblib.load("model_cAGR.pkl"  ) # Load "model.pkl"
-            tfidf = joblib.load("tfidf_cAGR.pki")
-            send =tfidf.transform([str])
-            temp = svm1.predict(send)
-            temp = temp.tolist()
-            output.append(temp)
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        output.append(executor.submit(cOPN_thread, str).result())
+        output.append(executor.submit(cEXT_thread, str).result())
+        output.append(executor.submit(cNEU_thread, str).result())
+        output.append(executor.submit(cCON_thread, str).result())
+        output.append(executor.submit(cAGR_thread, str).result())
+        
+    # pool = ThreadPool(processes=1)
+
+    # async_result1 = pool.apply_async(cOPN_thread, [str]) # tuple of args for foo
+    # async_result2 = pool.apply_async(cEXT_thread, [str]) # tuple of args for foo
+    # output.append(pool.apply_async(cEXT_thread, [str]).get()) # tuple of args for foo
+    # async_result3 = pool.apply_async(cNEU_thread, [str]) # tuple of args for foo
+    # async_result4 = pool.apply_async(cCON_thread, [str]) # tuple of args for foo
+    # async_result5 = pool.apply_async(cAGR_thread, [str]) # tuple of arg
+
+    # do some other stuff in the main process
+
+    # return_val = async_result2.get()
+    # output.append(return_val)
+   
     # try:
     #     send =tfidf.transform([str])
     # except NotFittedError as e:
@@ -85,7 +106,7 @@ def predict():
     # wc = tfidf.fit_transform(x.apply(lambda x: np.str_(x))) # Fit the model
     # send =tfidf.transform([str])
     # output.push(svm1.predict(send))
-    print(output)
+    
     # return jsonify({'prediction': output})
     return json.dumps({"OUTPUT":output} )
 
