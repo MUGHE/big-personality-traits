@@ -5,10 +5,10 @@ import docx
 import io
 import json
 import joblib
-from threading import Thread
 from flask_cors import CORS
 import concurrent.futures
-
+import mimetypes
+import PyPDF2, tempfile, os
 
     
 app = Flask(__name__)
@@ -60,19 +60,34 @@ def cAGR_thread(str):
 def predict():
     str=''
     data=''
-    if(request.method == 'GET'):
-        f = request.files['file']
-        print(f)
-        content = '\n'.join(p.text for p in docx.Document(f).paragraphs)
-        print(type(content))
-        df = pd.read_csv(io.StringIO(content))
-        print(df)
-        
-        str=content
-        # return 'file uploaded successfully'      
-    if(request.method == 'post'):
+    content_type = request.headers['Content-Type']
+    if content_type == 'application/json':
         data=request.get_json()
         str=data['statment']
+    else:
+        file = request.files['file']
+    # Check the file type
+        file_type = mimetypes.guess_type(file.filename)[0]
+        if file_type == 'application/pdf':
+            file_bytes = io.BytesIO(file.read())
+            pdf = PyPDF2.PdfReader(file_bytes)
+            num_pages = len(pdf.pages)
+            for page in range(num_pages):
+                page = pdf.pages[page]
+                text = page.extract_text()
+            str=text
+        elif file_type == 'text/plain':
+            contents = file.read()
+            str=contents            
+        else:
+            content = '\n'.join(p.text for p in docx.Document(file).paragraphs)
+            print(type(content))
+            df = pd.read_csv(io.StringIO(content))
+            print(df)
+            str=content        
+        
+        # return 'file uploaded successfully'      
+    
     print(str)
       
     output = []
